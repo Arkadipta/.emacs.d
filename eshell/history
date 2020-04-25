@@ -1,0 +1,5 @@
+cd 
+cd Data/3C454/
+which python
+ls
+help
