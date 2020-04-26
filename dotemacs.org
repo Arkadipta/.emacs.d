@@ -1087,6 +1087,8 @@ jump from one paragraph to another.
 #+BEGIN_SRC  emacs-lisp
 (use-package avy)
 (global-set-key (kbd "C-;") 'avy-goto-char-2)
+(global-set-key (kbd "C-:") 'avy-goto-char-timer)
+(setq avy-timeout-seconds 1000)
 (global-set-key (kbd "M-g f") 'avy-goto-line)
 #+END_SRC
 * Custom Functions:
