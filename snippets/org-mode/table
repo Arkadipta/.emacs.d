@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: table
+# key: <ta
+# --
+#+NAME: ${1, table name}
+#+CAPTION: ${2: caption of the table}
+|${3:column 1} | ${4: column 2} |
+|--------------+----------------|

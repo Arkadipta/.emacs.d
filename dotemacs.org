@@ -15,9 +15,11 @@
   - [[#paradox][Paradox:]]
   - [[#pretty-symbols][Pretty Symbols:]]
   - [[#fancy-battery][Fancy Battery]]
+  - [[#all-the-icons][All the icons]]
 - [[#programing][Programing:]]
   - [[#latex][LaTeX:]]
   - [[#org][Org]]
+  - [[#org-roamnoter][Org roam+noter:]]
   - [[#projectile][Projectile]]
   - [[#yaml][YAML]]
   - [[#python][Python:]]
@@ -31,6 +33,7 @@
   - [[#diff][Diff]]
   - [[#helm][Helm]]
   - [[#helm-plugins][Helm Plugins]]
+  - [[#helm-bibtex][Helm bibtex]]
   - [[#help][Help]]
   - [[#indentation][Indentation]]
   - [[#parentheses][Parentheses]]
@@ -38,6 +41,7 @@
   - [[#undo-tree][Undo-tree]]
   - [[#which-key][Which key]]
   - [[#navigation--paragraphs][Navigation / Paragraphs]]
+  - [[#interleave][Interleave:]]
 - [[#custom-functions][Custom Functions:]]
   - [[#insert-time-and-date][Insert Time and Date:]]
   - [[#my-movement-commands][My Movement commands:]]
@@ -108,6 +112,7 @@ Here are what I consider better defaults as per my own experience.
 (set-default-coding-systems 'utf-8)               ; Default to utf-8 encoding
 (setq visible-bell 1)
 (setq backup-directory-alist `(("." . "~/.saves")))
+(setq shift-select-mode nil)
 #+END_SRC
 
 Fullscreen startup
@@ -148,12 +153,12 @@ I load =~/.emacs.d/.secret.el= to keep sensible things out of version control. F
 (defvar me/erc-password           nil        "The ERC password to use.")
 (defvar me/erc-port               nil        "The ERC port to use.")
 (defvar me/erc-server             nil        "The ERC server to use.")
-(defvar me/font-family            "Monospace"  "The font to use.")
-(defvar me/font-size-default      120        "The font size to use for default text.")
-(defvar me/font-size-header-line  120        "The font size to use for the header-line.")
-(defvar me/font-size-mode-line    110        "The font size to use for the mode-line.")
+(defvar me/font-family            "Source Code Pro"  "The font to use.")
+(defvar me/font-size-default      130        "The font size to use for default text.")
+(defvar me/font-size-header-line  130        "The font size to use for the header-line.")
+(defvar me/font-size-mode-line    130        "The font size to use for the mode-line.")
 (defvar me/font-size-small        100        "The font size to use for smaller text.")
-(defvar me/font-size-title        140        "The font size to use for titles.")
+(defvar me/font-size-title        130        "The font size to use for titles.")
 
 (let ((secret.el (expand-file-name ".secret.el" user-emacs-directory)))
   (when (file-exists-p secret.el)
@@ -342,6 +347,12 @@ Turn on =auto-fill-mode= /almost/ everywhere.
 (use-package fancy-battery)
 (add-hook 'after-init-hook #'fancy-battery-mode)
 #+END_SRC
+
+** All the icons
+
+#+BEGIN_SRC emacs-lisp
+(use-package all-the-icons)
+#+END_SRC
 * Programing:                                                           :TOC:
 ** LaTeX:
 *** Texcount:                                                           :TOC:
@@ -491,9 +502,20 @@ Org-ref
 (use-package org-ref)
 (setq org-ref-bibliography-notes '("~/Dropbox/orgfiles/read_bullets.org")
       org-ref-default-bibliography '("~/Dropbox/Bibliography/references.bib")
-      org-ref-pdf-directory '("~/Desktop/References/"))
+      org-ref-pdf-directory '("/home/gogo/Dropbox/Research_papers"))
   (define-key global-map "\C-cr" 'org-ref-helm-insert-ref-link)
   (define-key global-map "\C-c)" 'org-ref-helm-insert-cite-link)
+(defun my/org-ref-open-pdf-at-point ()
+    "Open the pdf for bibtex key under point if it exists."
+    (interactive)
+    (let* ((results (org-ref-get-bibtex-key-and-file))
+           (key (car results))
+           (pdf-file (concat org-ref-pdf-directory
+                             (org-ref-get-pdf-filename
+                              (org-ref-get-mendeley-filename key)))))
+      (if (file-exists-p pdf-file)
+          (find-file pdf-file)
+        (message "no pdf found for %s" pdf-file))))
 #+END_SRC
 
 Org Agenda:
@@ -544,6 +566,8 @@ Org latex output
 #+BEGIN_SRC emacs-lisp
 (setq org-latex-pdf-process
         '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f"))
+(require 'ox-beamer)
+(setq org-highlight-latex-and-related '(latex script entities))
 #+END_SRC
 
 ;;For autolist feature
@@ -560,9 +584,192 @@ Org pdftools:
 (pdf-tools-install)
 )
 (pdf-tools-install)
-(use-package org-pdfview
-:ensure t)
+;(use-package org-pdfview
+;':ensure t)
 #+END_SRC
+
+Org babel
+#+BEGIN_SRC emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages '((python . t)))
+(setq org-babel-python-command "/home/gogo/anaconda3/bin/python")
+#+END_SRC
+
+Fill paragraph in org mode latex blocks
+#+BEGIN_SRC emacs-lisp
+(defun org-fill-paragraph--latex-environment (&rest args)
+  "Use default fill-paragraph in latex environments."
+  (not (eql (org-element-type (org-element-context)) 'latex-environment)))
+
+(advice-add 'org-fill-paragraph :before-while #'org-fill-paragraph--latex-environment)
+#+END_SRC
+
+** Org roam+noter: 
+#+BEGIN_SRC emacs-lisp
+(use-package org-roam)
+(setq org-roam-directory "~/wiki")
+(add-hook 'after-init-hook 'org-roam-mode)
+(setq org-roam-tag-sources '(prop all-directories))
+(setq org-roam-capture-templates
+'(("d" "default" plain (function org-roam--capture-get-point)
+          "%?"
+           :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
+           :head "#+TITLE: ${title} "
+           :unnarrowed t)
+  ("r" "reference" plain (function org-roam--capture-get-point)
+          "User input: %^{PROMPT}"
+          :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
+          :head "#+TITLE: ${title}"
+          :unnarrowed t)))
+
+
+(defvar orb-title-format "${author-or-editor-abbrev} (${date}).  ${title}."
+  "Format of the title to use for `orb-templates'.")
+
+(use-package org-roam-bibtex
+  :requires bibtex-completion
+  :hook (org-roam-mode . org-roam-bibtex-mode)
+  :load-path "~/projects/org-roam-bibtex/"
+  :bind (:map org-roam-bibtex-mode-map
+         (("C-c m f" . orb-find-non-ref-file))
+         :map org-mode-map
+         (("C-c m t" . orb-insert-non-ref)
+          ("C-c m a" . orb-note-actions)))
+  :init
+  :custom
+  (orb-autokey-format "%a%y")
+  (orb-templates
+   `(("r" "ref" plain
+      (function org-roam-capture--get-point)
+      ""
+      :file-name "refs/${citekey}"
+      :head ,(s-join "\n"
+                     (list
+                      (concat "#+title: "
+                              orb-title-format)
+                      "#+roam_key: ${ref}"
+                      "#+created: %U"
+                      "#+last_modified: %U\n\n"))
+      :unnarrowed t)
+     ("p" "ref + physical" plain
+      (function org-roam-capture--get-point)
+      ""
+      :file-name "refs/${citekey}"
+      :head ,(s-join "\n"
+                     (list
+                      (concat "#+title: "
+                              orb-title-format)
+                      "#+roam_key: ${ref}"
+                      ""
+                      "* Notes :physical:")))
+     ("n" "ref + noter" plain
+      (function org-roam-capture--get-point)
+      ""
+      :file-name "refs/${citekey}"
+      :head ,(s-join "\n"
+                     (list
+                      (concat "#+title: "
+                              orb-title-format)
+                      "#+roam_key: ${ref}"
+                      ""
+                      "* Notes :noter:"
+                      ":PROPERTIES:"
+                      ":NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")"
+                      ":NOTER_PAGE:"
+                      ":END:"))))))
+
+;(use-package org-roam-bibtex
+;  :after org-roam
+;  :hook (org-roam-mode . org-roam-bibtex-mode))
+;(use-package org-noter)
+
+(use-package org-noter
+  :bind (:map org-mode-map
+         (("C-c N" . zp/org-noter-dwim))
+         :map org-noter-doc-mode-map
+         (("M-p" . zp/org-noter-insert-precise-note-dwim)))
+; M-i replaces tab-to-tab-stop
+  :config
+  (setq org-noter-hide-other t
+        org-noter-auto-save-last-location t
+        org-noter-doc-split-fraction '(0.57 0.43))
+
+  (defun zp/org-noter-visual-line-mode ()
+    "Enable visual-line-mode in ‘org-noter’ notes.
+Workaround to counter race conditions with the margins."
+    (let ((parent (current-buffer))
+          (refresh (lambda (parent)
+                     (with-current-buffer parent
+                       (visual-line-mode 'toggle)
+                       (visual-line-mode 'toggle)))))
+      (run-at-time "1 sec" nil refresh parent)
+      (run-at-time "5 sec" nil refresh parent)))
+
+  (add-hook 'org-noter-notes-mode-hook #'zp/org-noter-visual-line-mode)
+
+  ;; Fix for hiding truncation
+  (defun org-noter--set-notes-scroll (_window &rest _ignored)
+    nil)
+
+  ;; Fix for visual-line-mode with PDF files
+  (defun org-noter--note-after-tipping-point (_point _note-property _view)
+    nil)
+
+  (defun zp/org-noter-indirect (arg)
+    "Ensure that org-noter starts in an indirect buffer.
+Without this wrapper, org-noter creates a direct buffer
+restricted to the notes, but this causes problems with the refile
+system.  Namely, the notes buffer gets identified as an
+agenda-files buffer.
+This wrapper addresses it by having org-noter act on an indirect
+buffer, thereby propagating the indirectness."
+    (interactive "P")
+    (if (org-entry-get nil org-noter-property-doc-file)
+        (with-selected-window (zp/org-tree-to-indirect-buffer-folded nil t)
+          (org-noter arg)
+          (kill-buffer))
+      (org-noter arg)))
+
+  (defun zp/org-noter-dwim (arg)
+    "Run org-noter on the current tree, even if we’re in the agenda."
+    (interactive "P")
+    (let ((in-agenda (derived-mode-p 'org-agenda-mode))
+          (marker))
+      (cond (in-agenda
+             (setq marker (get-text-property (point) 'org-marker))
+             (with-current-buffer (marker-buffer marker)
+               (goto-char marker)
+               (unless (org-entry-get nil org-noter-property-doc-file)
+                 (user-error "No org-noter info on this tree"))
+               (zp/org-noter-indirect arg)))
+            (t
+             (zp/org-noter-indirect arg)
+             (setq marker (point-marker))))
+      (org-with-point-at marker
+        (let ((tags (org-get-tags)))
+          (when (and (org-entry-get nil org-noter-property-doc-file)
+                     (not (member "noter" tags)))
+            (org-set-tags (push "noter" tags)))))
+      (unless in-agenda
+        (set-marker marker nil))))
+
+  (defun zp/org-noter-insert-precise-note-dwim (force-mouse)
+    "Insert note associated with a specific location.
+If in nov-mode, use point rather than the mouse to target the
+position."
+    (interactive "P")
+    (if (and (derived-mode-p 'nov-mode)
+             (not force-mouse))
+        (let ((pos (if (region-active-p)
+                       (min (region-beginning) (point))
+                     (point))))
+          (org-noter-insert-note pos))
+      (org-noter-insert-precise-note)))
+
+  (define-key org-noter-doc-mode-map (kbd "j") 'pdf-view-next-line-or-next-page)
+  (define-key org-noter-doc-mode-map (kbd "k") 'pdf-view-previous-line-or-previous-page))
+#+END_SRC
+
 ** Projectile
 
 Projectile brings project-level facilities to Emacs such as grep, find and
@@ -626,6 +833,13 @@ For python:
 (use-package company-anaconda)
 (eval-after-load "company"
  '(add-to-list 'company-backends 'company-anaconda))
+#+END_SRC
+
+*** Pyvenv
+#+BEGIN_SRC emacs-lisp
+(use-package pyvenv)
+;(setenv "WORKON_HOME" (concat (getenv "CONDA_PREFIX") "/envs"))
+(pyvenv-mode 1)
 #+END_SRC
 ** Shell and Terminal
 
@@ -751,12 +965,14 @@ completion candidates.
   (company-require-match nil)
   (company-tooltip-align-annotations t))
   ;(delete 'company-dabbrev company-backends)
+  (setq company-dabbrev-char-regexp "[A-z:-]")
 
  (use-package yasnippet
   :bind
   (:map yas-minor-mode-map
         ("TAB" . nil)
-        ([tab] . nil))
+        ([tab] . nil)
+        ("<C-tab>" . yas-expand))
   :hook
   ((emacs-lisp-mode . yas-minor-mode)
    (html-mode . yas-minor-mode)
@@ -944,6 +1160,15 @@ Fourth-party packages for Helm.
   :config
   (helm-projectile-toggle 1))
 #+END_SRC
+
+** Helm bibtex
+#+BEGIN_SRC emacs-lisp
+(autoload 'helm-bibtex "helm-bibtex" "" t)
+(setq bibtex-completion-bibliography
+      '("/home/gogo/Dropbox/Bibliography/references.bib"))
+(setq bibtex-completion-library-path '("/home/gogo/Dropbox/Research_papers"))
+(setq bibtex-completion-notes-path "/home/gogo/Dropbox/Notes/")
+#+END_SRC
 ** Help
 
 #+BEGIN_SRC emacs-lisp
@@ -1090,6 +1315,10 @@ jump from one paragraph to another.
 (global-set-key (kbd "C-:") 'avy-goto-char-timer)
 (setq avy-timeout-seconds 1000)
 (global-set-key (kbd "M-g f") 'avy-goto-line)
+#+END_SRC
+** Interleave:
+#+BEGIN_SRC emacs-lisp
+;;(use-package interleave)
 #+END_SRC
 * Custom Functions:
 ** Insert Time and Date:

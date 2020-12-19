@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: health
+# key: health_
+# --
+`(format-time-string "* <%Y-%m-%d %a>")`$0
+:PROPERTIES:
+:WAKE_UP_TIME: $1
+:BREAKFAST: $2
+:LUNCH: $3
+:SNACKS: $4
+:DINNER: $5
+:BLOOD_PRESSURE: $6
+:EXERCISE: $7
+:WATER_INTAKE: $8
+:SLEEP_TIME: $9
+:END:

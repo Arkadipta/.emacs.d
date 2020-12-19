@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: start_latex
+# key: lst_
+# --
+#+LATEX_CLASS_OPTIONS: [article,a4paper,times,12pt,listings-bw,microtype]
+#+LATEX_HEADER: \usepackage[margin=2cm]{geometry}
+#+LATEX_HEADER: \usepackage{graphicx}
+

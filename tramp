@@ -1,6 +1,6 @@
-;; -*- emacs-lisp -*- <20/04/22 04:23:43 /home/gogo/.emacs.d/tramp>
+;; -*- emacs-lisp -*- <20/12/18 02:21:16 /home/gogo/.emacs.d/tramp>
 ;; Tramp connection history.  Don't change this file.
-;; You can delete it, forcing Tramp to reapply the checks.
+;; Run `M-x tramp-cleanup-all-connections' instead.
 
 (((tramp-file-name "ssh" "arkadipta" nil "158.144.54.86" nil nil nil)
   ("uname" "Linux 5.3.0-46-generic")
@@ -20,4 +20,8 @@
   ("perl-file-spec" t)
   ("perl-cwd-realpath" t)
   ("perl" "\\perl")
-  ("git" "\\git")))
+  ("git" "\\git"))
+ ((tramp-file-name "ssh" nil nil "158.144.54.86" nil nil nil)
+  nil)
+ ((tramp-file-name "ssh" nil nil "158.144.54.97" nil nil nil)
+  nil))
