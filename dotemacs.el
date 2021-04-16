@@ -76,7 +76,7 @@
  :custom
  (doom-themes-enable-bold nil)
  :config
- (load-theme 'doom-vibrant t)
+ (load-theme 'doom-dracula t)
  (with-eval-after-load 'flycheck
    (set-face-attribute 'flycheck-error nil :underline `(:color ,(doom-color 'error) :style line))
    (set-face-attribute 'flycheck-info nil :underline `(:color ,(doom-color 'highlight) :style line))
@@ -231,9 +231,9 @@
         ([remap forward-paragraph] . me/forward-paragraph-dwim)
         ("<C-return>" . nil)
         ("<C-S-down>" . nil)
-        ("<C-S-up>" . nil)
-        ("<M-S-down>" . nil)
-        ("<M-S-up>" . nil))
+        ("<C-S-up>" . nil))
+;        ("<M-S-down>" . nil)
+;        ("<M-S-up>" . nil))
   :hook
   ((org-mode . me/org-set-ongoing-hydra-body)
    (org-mode . org-sticky-header-mode)
