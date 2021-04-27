@@ -2,9 +2,14 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("org-capture-last-stored"
- (filename . "~/wiki/2020-12-20-120337-rejection_sampling.org")
- (front-context-string . "#+TITLE: rejecti")
- (rear-context-string)
- (position . 1))
+(("org-refile-last-stored"
+ (filename . "~/Dropbox/orgfiles/Life.org")
+ (front-context-string . "* Money:\n** Budg")
+ (rear-context-string . ":27]\n** Travel:\n")
+ (position . 6931))
+("org-capture-last-stored"
+ (filename . "~/Dropbox/orgfiles/newgtd.org")
+ (front-context-string . "** Org inline ta")
+ (rear-context-string . "ollow up Later:\n")
+ (position . 626))
 )

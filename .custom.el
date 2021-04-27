@@ -3,7 +3,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(doom-themes-enable-bold nil)
+ '(doom-themes-enable-bold nil nil nil "Customized with use-package doom-themes")
+ '(org-agenda-files
+   '("~/Projects/Thesis/Chapter_1/chapter_1.org" "~/Dropbox/orgfiles/work.org" "~/Dropbox/orgfiles/Life.org" "~/Dropbox/orgfiles/newgtd.org"))
  '(package-selected-packages '(org-plus-contrib use-package)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

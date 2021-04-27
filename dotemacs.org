@@ -42,6 +42,7 @@
   - [[#which-key][Which key]]
   - [[#navigation--paragraphs][Navigation / Paragraphs]]
   - [[#interleave][Interleave:]]
+  - [[#evil-mode][Evil mode:]]
 - [[#custom-functions][Custom Functions:]]
   - [[#insert-time-and-date][Insert Time and Date:]]
   - [[#my-movement-commands][My Movement commands:]]
@@ -56,6 +57,9 @@
   - [[#hydra--projectile][Hydra / Projectile]]
   - [[#hydra--system][Hydra / System]]
   - [[#hydra--windows][Hydra / Windows]]
+  - [[#hydra--evil][Hydra / Evil]]
+  - [[#hydra--org-ref][Hydra / org-ref:]]
+  - [[#hydra--evil-motion][Hydra / evil-motion:]]
 
 * Bootstrap
 ** Use better defaults:                                                 :TOC:
@@ -238,7 +242,8 @@ Load theme and fix some high-level faces to match my personal preferences.
     (fancy-battery-mode 1)
     (setq fancy-battery-show-percentage t)
     (setq spaceline-highlight-face-func 'spaceline-highlight-face-modified)
-   )
+    ;(setq spaceline-highlight-face-func 'spaceline-highlight-face-evil-state)
+)
 (custom-set-faces
  '(spaceline-modified ((t (:background "OrangeRed" :foreground "#3E3D31"
                                        :inherit (quote mode-line))))))
@@ -417,7 +422,7 @@ authoring documents with a fast and effective plain-text system.
   (org-fontify-done-headline t)
   (org-fontify-quote-and-verse-blocks t)
   (org-src-window-setup 'current-window)
-  (org-startup-folded nil)
+  (org-startup-folded 'content)
   (org-startup-truncated nil)
   ;;(org-support-shift-select 'always)
   (org-support-shift-select 0)
@@ -458,7 +463,7 @@ Pretty bullets
 (use-package org-bullets
   :hook (org-mode . org-bullets-mode)
   :config
-  (setq org-bullets-bullet-list '("◉" "○" "□" "❖" "✮" "✱" "✸")))
+  (setq org-bullets-bullet-list '("◉" "○" "□" "◉" "○" "□" "✸")))
   (set-language-environment 'utf-8)
   (setq locale-coding-system 'utf-8)
 
@@ -490,11 +495,11 @@ Beautiful headers
    `(org-level-7 ((t (,@headline ,@variable-tuple))))
    `(org-level-6 ((t (,@headline ,@variable-tuple))))
    `(org-level-5 ((t (,@headline ,@variable-tuple))))
-   `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#8470ff"))))
-   `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#228b22"))))
-   `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#5f9ea0"))))
-   `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#6a5acd"))))
-   `(org-document-title ((t (,@headline ,@variable-tuple :height 1.2 :underline t :foreground "#6a5acd"))))))
+   `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#8470ff"))))
+   `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#228b22"))))
+   `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#5f9ea0"))))
+   `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#6a5acd"))))
+   `(org-document-title ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#6a5acd"))))))
 #+END_SRC
 
 Org-ref
@@ -1320,6 +1325,77 @@ jump from one paragraph to another.
 #+BEGIN_SRC emacs-lisp
 ;;(use-package interleave)
 #+END_SRC
+
+** Evil mode:
+Evil mode for Vim like keybinding.
+#+BEGIN_SRC emacs-lisp
+;; (use-package evil-leader)
+;; (global-evil-leader-mode)
+
+;; (use-package evil
+;;  :ensure t  ;; install evil if not installed
+;;  :init      ;; tweak evil's configuration before loading it
+;;  (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+;;  (setq evil-want-keybinding nil)
+;;  (setq evil-vsplit-window-right t)
+;;  (setq evil-split-window-below t)
+;;  (evil-mode))
+;; ;;Evil mode everywhere
+;; (use-package evil-collection
+;;  :after evil
+;;  :ensure t
+;;  :config
+;;  (evil-collection-init))
+;;Evil-org for evil mode in org documents 
+;; (use-package evil-org
+;;  :commands evil-org-mode
+;;  :after org
+;;  :init
+;;  (add-hook 'org-mode-hook 'evil-org-mode)
+;;  :config
+;;  (add-hook 'evil-org-mode-hook
+;;            (lambda ()
+;;              (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading))
+;; (require 'evil-org-agenda)
+;; (evil-org-agenda-set-keys)
+;; )))
+
+;; (add-hook 'org-mode-hook
+;; (lambda ()
+;;   (evil-org-mode)
+
+;;   ;; custom mappings
+;;   (evil-define-key 'normal evil-org-mode-map
+;;     (kbd "-") 'org-ctrl-c-minus
+;;     (kbd "|") 'org-table-goto-column
+;;     (kbd "m-o") (evil-org-define-eol-command org-insert-heading)
+;;     (kbd "m-t") (evil-org-define-eol-command org-insert-todo))
+
+;;   ;; configure leader key
+;;   (evil-leader/set-key-for-mode 'org-mode
+;;     "." 'hydra-org-state/body
+;;     "t" 'org-todo
+;;     "t" 'org-show-todo-tree
+;;     "v" 'org-mark-element
+;;     "a" 'org-agenda
+;;     "c" 'org-archive-subtree
+;;     "l" 'evil-org-open-links
+;;     "c" 'org-resolve-clocks)
+
+;;  ))
+
+;; (use-package evil-org)
+;; ;; (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading))
+;; ;; make movement keys work like they should
+;; (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+;; (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+;; (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+;; (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+;; ;; make horizontal movement cross lines                                    
+;; ;; (setq-default evil-cross-lines t)
+#+END_SRC
+
+
 * Custom Functions:
 ** Insert Time and Date:
 Insert the current date. Use with Hydra.
@@ -1672,4 +1748,102 @@ _q_ quit            _b_ balance         _-_ out
   ("-" text-scale-decrease)
   ("+" text-scale-increase)
   ("=" (text-scale-increase 0)))
+#+END_SRC
+
+** Hydra / Evil
+#+BEGIN_SRC emacs-lisp
+;; Define a transient state for quick navigation
+  (defhydra hydra-org-state (:color pink)
+     "
+^
+^Navigation^                ^Links^              ^Blocks^                ^Updates^         ^TODO^
+^----------^----------------^-----^--------------^------^----------------^-------^---------^----^------------
+_q_ quit                    _n_ next link        _N_ next block          _._ C-c C-c       _H_ Increment TODO
+_i_ org cycle               _p_ previous link    _P_ previous block      _*_ C-c *         _L_ Decrement TODO
+_I_ org-shifttab            _o_ open link        ^^                      _-_ C-c -         _J_ Increase priority
+_h_ org-up-element          ^^                   ^^                      ^^                _K_ Decrease priority
+_l_ org-down-element        ^^                   ^^                      ^^                _t_ TODO
+_j_ org-forward-element     ^^                   ^^                      ^^                ^^
+_k_ org-backward-element    ^^                   ^^                      ^^                ^^
+"
+;; basic navigation
+    ("q" nil)
+    ("i" org-cycle)
+    ("I" org-shifttab)
+    ("h" org-up-element)
+    ("l" org-down-element)
+    ("j" org-forward-element)
+    ("k" org-backward-element)
+    ;; navigating links
+    ("n" org-next-link)
+    ("p" org-previous-link)
+    ("o" org-open-at-point)
+    ;; navigation blocks
+    ("N" org-next-block)
+    ("P" org-previous-block)
+    ;; updates
+    ("." org-ctrl-c-ctrl-c)
+    ("*" org-ctrl-c-star)
+    ("-" org-ctrl-c-minus)
+    ;; change todo state
+    ("H" org-shiftleft)
+    ("L" org-shiftright)
+    ("J" org-shiftdown)
+    ("K" org-shiftup)
+    ("t" org-todo))
+#+END_SRC
+
+** Hydra / org-ref:
+#+BEGIN_SRC emacs-lisp
+;; Define a transient state for inserting org-ref links
+  (defhydra hydra-org-ref (:color blue)
+  "
+^
+^Windows^           ^Refer^            ^Cite^
+^───────^───────────^─────^────────────^────^──────────────
+_q_ quit            _r_ refer          _c_ cite
+^^ 
+"
+  ("q" nil)
+  ("r" org-ref-helm-insert-ref-link)
+  ("c" org-ref-helm-insert-cite-link))
+  ;(evil-leader/set-key-for-mode 'org-mode "r" 'hydra-org-ref/body)
+#+END_SRC
+
+** Hydra / evil-motion:
+#+BEGIN_SRC emacs-lisp
+;; Define a transient state for inserting org-ref links
+  (defhydra hydra-motion (:color amaranth)
+  "
+^
+^Windows^           ^Motion^                                 ^Mark^
+^───────^───────────^──────^─────────────────────────────────^────^──────────────
+_q_ quit                       _k_             
+^^                 _H_ << _J_ < _h_  _;_  _l_ > _K_ >> _L_               _<SPC>_   Set Mark
+^^                             _j_                           _C-<SPC>_ Set Rectangle Mark
+^^                                                         _t_       Rectangle Insert
+^^
+"
+  ("q" nil)
+  ("j" next-line)
+  ("k" previous-line)
+  ("l" forward-char)
+  ("h" backward-char)
+  ("J" forward-word)
+  ("K" backward-word)
+  ("L" forward-sentence)
+  ("H" backward-sentence)
+  ("<SPC>" set-mark-command)
+  ("C-<SPC>" rectangle-mark-mode)
+  (";" avy-goto-char-timer :color blue)
+  ("t" string-rectangle :color blue)
+  ("y" kill-ring-save "Copy")
+  ("d" kill-region "Cut")
+  ("p" yank "Paste")
+  ("<left>" backward-char)
+  ("<right>" forward-char)
+  ("<up>" previous-line)
+  ("<down>" next-line)
+  ("u" undo "Undo"))
+(global-set-key (kbd "C-.") 'hydra-motion/body)
 #+END_SRC
