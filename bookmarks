@@ -8,8 +8,8 @@
  (rear-context-string . ":27]\n** Travel:\n")
  (position . 6931))
 ("org-capture-last-stored"
- (filename . "~/Dropbox/orgfiles/newgtd.org")
- (front-context-string . "** Org inline ta")
- (rear-context-string . "ollow up Later:\n")
- (position . 626))
+ (filename . "~/wiki/refs/2019ApJ...887..185S.org")
+ (front-context-string . "#+title: Sarkar,")
+ (rear-context-string)
+ (position . 1))
 )

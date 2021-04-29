@@ -307,13 +307,20 @@
    `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#6a5acd"))))
    `(org-document-title ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#6a5acd"))))))
 
-(use-package org-ref)
-(setq org-ref-bibliography-notes '("~/Dropbox/orgfiles/read_bullets.org")
-      org-ref-default-bibliography '("~/Dropbox/Bibliography/references.bib")
-      org-ref-pdf-directory '("/home/gogo/Dropbox/Research_papers"))
-  (define-key global-map "\C-cr" 'org-ref-helm-insert-ref-link)
-  (define-key global-map "\C-c)" 'org-ref-helm-insert-cite-link)
-(defun my/org-ref-open-pdf-at-point ()
+(use-package org-ref
+  ;; :init
+  ; code to run before loading-org-ref
+  :config
+  (setq
+   org-ref-completion-library 'org-ref-helm-bibtex
+   org-ref-get-pdf-filename-function 'org-ref-get-pdf-filename-helm-bibtex
+   org-ref-bibliography-notes "~/Dropbox/orgfiles/bibnotes.org"
+   org-ref-default-bibliography (list "/home/gogo/Dropbox/Bibliography/references.bib")
+   ;org-ref-pdf-directory '("/home/gogo/Dropbox/Research_papers")
+   org-ref-notes-directory "/home/gogo/Dropbox/Notes/"
+   org-ref-notes-function 'orb-edit-notes)
+
+   (defun my/org-ref-open-pdf-at-point ()
     "Open the pdf for bibtex key under point if it exists."
     (interactive)
     (let* ((results (org-ref-get-bibtex-key-and-file))
@@ -324,6 +331,18 @@
       (if (file-exists-p pdf-file)
           (find-file pdf-file)
         (message "no pdf found for %s" pdf-file))))
+
+                                        ; default keybindings
+  :bind
+  (:map org-mode-map
+        ("\C-cr" . org-ref-helm-insert-ref-link)
+        ("\C-c)" . org-ref-helm-insert-cite-link))
+ )
+
+
+
+;  (define-key org-mode-map "\C-cr" 'org-ref-helm-insert-ref-link)
+;  (define-key org-mode-map "\C-c)" 'org-ref-helm-insert-cite-link)
 
 (global-set-key (kbd "\C-c c") 'org-capture)
 (global-set-key (kbd "\C-c a") 'org-agenda)
@@ -388,77 +407,113 @@
 
 (advice-add 'org-fill-paragraph :before-while #'org-fill-paragraph--latex-environment)
 
-(use-package org-roam)
-(setq org-roam-directory "~/wiki")
-(add-hook 'after-init-hook 'org-roam-mode)
-(setq org-roam-tag-sources '(prop all-directories))
-(setq org-roam-capture-templates
-'(("d" "default" plain (function org-roam--capture-get-point)
-          "%?"
+(use-package org-roam
+  ;; :init
+  :hook (after-init . org-roam-mode)
+  :config 
+  (setq
+   org-roam-directory "~/wiki"
+   org-roam-tag-sources '(prop all-directories)
+   org-roam-capture-templates
+        '(("d" "default" plain (function org-roam--capture-get-point)
+           "%?"
            :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
            :head "#+TITLE: ${title} "
            :unnarrowed t)
-  ("r" "reference" plain (function org-roam--capture-get-point)
-          "User input: %^{PROMPT}"
-          :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
-          :head "#+TITLE: ${title}"
-          :unnarrowed t)))
+          ("r" "reference" plain (function org-roam--capture-get-point)
+           "User input: %^{PROMPT}"
+           :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
+           :head "#+TITLE: ${title}"
+           :unnarrowed t))))
+  ;;(add-hook 'after-init-hook 'org-roam-mode)
+  ;;(setq org-roam-tag-sources '(prop all-directories))
+  ;(setq org-roam-capture-templates
+  ;;      '(("d" "default" plain (function org-roam--capture-get-point)
+  ;;         "%?"
+  ;;         :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
+  ;;         :head "#+TITLE: ${title} "
+  ;;         :unnarrowed t)
+  ;;        ("r" "reference" plain (function org-roam--capture-get-point)
+  ;;        "User input: %^{PROMPT}"
+  ;;         :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
+  ;;         :head "#+TITLE: ${title}"
+  ;;         :unnarrowed t))))
 
 
 (defvar orb-title-format "${author-or-editor-abbrev} (${date}).  ${title}."
   "Format of the title to use for `orb-templates'.")
 
+;;  (use-package org-roam-bibtex
+;;   :after (org-roam)
+;;   :hook (org-roam-mode . org-roam-bibtex-mode)
+;;   :config
+;;   (require 'org-ref)
+;;   (setq org-roam-bibtex-preformat-keywords
+;;    '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
+;;   (setq orb-templates
+;;         '(("r" "ref" plain (function org-roam-capture--get-point)
+;;            ""
+;;            :file-name "${slug}"
+;;            :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n#+ROAM_TAGS: 
+
+;; - keywords :: ${keywords}
+
+;; \n* ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :URL: ${url}\n  :AUTHOR: ${author-or-editor}\n  :NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")\n  :NOTER_PAGE: \n  :END:\n\n"
+
+;;            :unnarrowed t))))
+
 (use-package org-roam-bibtex
-  :requires bibtex-completion
-  :hook (org-roam-mode . org-roam-bibtex-mode)
-  :load-path "~/projects/org-roam-bibtex/"
-  :bind (:map org-roam-bibtex-mode-map
-         (("C-c m f" . orb-find-non-ref-file))
-         :map org-mode-map
-         (("C-c m t" . orb-insert-non-ref)
-          ("C-c m a" . orb-note-actions)))
-  :init
-  :custom
-  (orb-autokey-format "%a%y")
-  (orb-templates
-   `(("r" "ref" plain
-      (function org-roam-capture--get-point)
-      ""
-      :file-name "refs/${citekey}"
-      :head ,(s-join "\n"
-                     (list
-                      (concat "#+title: "
-                              orb-title-format)
-                      "#+roam_key: ${ref}"
-                      "#+created: %U"
-                      "#+last_modified: %U\n\n"))
-      :unnarrowed t)
-     ("p" "ref + physical" plain
-      (function org-roam-capture--get-point)
-      ""
-      :file-name "refs/${citekey}"
-      :head ,(s-join "\n"
-                     (list
-                      (concat "#+title: "
-                              orb-title-format)
-                      "#+roam_key: ${ref}"
-                      ""
-                      "* Notes :physical:")))
-     ("n" "ref + noter" plain
-      (function org-roam-capture--get-point)
-      ""
-      :file-name "refs/${citekey}"
-      :head ,(s-join "\n"
-                     (list
-                      (concat "#+title: "
-                              orb-title-format)
-                      "#+roam_key: ${ref}"
-                      ""
-                      "* Notes :noter:"
-                      ":PROPERTIES:"
-                      ":NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")"
-                      ":NOTER_PAGE:"
-                      ":END:"))))))
+ :after org-roam
+ :hook (org-roam-mode . org-roam-bibtex-mode)
+ :config
+ (require 'org-ref)
+ :bind (:map org-roam-bibtex-mode-map
+        (("C-c m f" . orb-find-non-ref-file))
+        :map org-mode-map
+        (("C-c m t" . orb-insert-non-ref)
+         ("C-c m a" . orb-note-actions)))
+ :init
+ :custom
+ (orb-autokey-format "%a%y")
+ (orb-templates
+  `(("r" "ref" plain
+     (function org-roam-capture--get-point)
+     ""
+     :file-name "refs/${citekey}"
+     :head ,(s-join "\n"
+                    (list
+                     (concat "#+title: "
+                             orb-title-format)
+                     "#+roam_key: ${ref}"
+                     "#+created: %U"
+                     "#+last_modified: %U\n\n"))
+     :unnarrowed t)
+    ("p" "ref + physical" plain
+     (function org-roam-capture--get-point)
+     ""
+     :file-name "refs/${citekey}"
+     :head ,(s-join "\n"
+                    (list
+                     (concat "#+title: "
+                             orb-title-format)
+                     "#+roam_key: ${ref}"
+                     ""
+                     "* Notes :physical:")))
+    ("n" "ref + noter" plain
+     (function org-roam-capture--get-point)
+     ""
+     :file-name "refs/${citekey}"
+     :head ,(s-join "\n"
+                    (list
+                     (concat "#+title: "
+                             orb-title-format)
+                     "#+roam_key: ${ref}"
+                     ""
+                     "* Notes :noter:"
+                     ":PROPERTIES:"
+                     ":NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")"
+                     ":NOTER_PAGE:"
+                     ":END:"))))))
 
 ;(use-package org-roam-bibtex
 ;  :after org-roam
@@ -507,7 +562,8 @@ This wrapper addresses it by having org-noter act on an indirect
 buffer, thereby propagating the indirectness."
     (interactive "P")
     (if (org-entry-get nil org-noter-property-doc-file)
-        (with-selected-window (zp/org-tree-to-indirect-buffer-folded nil t)
+        (with-selected-window (org-tree-to-indirect-buffer nil t)
+        ;; (with-selected-window (zp/org-tree-to-indirect-buffer-folded nil t)
           (org-noter arg)
           (kill-buffer))
       (org-noter arg)))
@@ -813,11 +869,20 @@ position."
   :config
   (helm-projectile-toggle 1))
 
-(autoload 'helm-bibtex "helm-bibtex" "" t)
-(setq bibtex-completion-bibliography
-      '("/home/gogo/Dropbox/Bibliography/references.bib"))
-(setq bibtex-completion-library-path '("/home/gogo/Dropbox/Research_papers"))
-(setq bibtex-completion-notes-path "/home/gogo/Dropbox/Notes/")
+(use-package helm-bibtex
+  :ensure t
+  :config
+  (setq bibtex-completion-pdf-field "file")
+  (setq bibtex-completion-bibliography '("/home/gogo/Dropbox/Bibliography/references.bib")) ; my master.bib
+  (setq bibtex-completion-library-path '("/home/gogo/Dropbox/Research_papers"))             ; pdf folder
+  (setq bibtex-completion-notes-path "/home/gogo/Dropbox/Notes/"))
+
+
+;(autoload 'helm-bibtex "helm-bibtex" "" t)
+;(setq bibtex-completion-bibliography
+;      '("/home/gogo/Dropbox/Bibliography/references.bib"))
+;(setq bibtex-completion-library-path '("/home/gogo/Dropbox/Research_papers"))
+;(setq bibtex-completion-notes-path "/home/gogo/Dropbox/Notes/")
 
 (use-package help-mode
   :ensure nil
