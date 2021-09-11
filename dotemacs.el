@@ -12,7 +12,7 @@
  delete-by-moving-to-trash t                      ; Delete files to trash
  display-time-default-load-average nil            ; Don't display load average
  display-time-format "%H:%M"                      ; Format the time string
- fill-column 180                                  ; Set width for automatic line breaks
+ fill-column 90                                   ; Set width for automatic line breaks
  help-window-select t                             ; Focus new help windows when opened
  indent-tabs-mode nil                             ; Stop using tabs to indent
  inhibit-startup-screen t                         ; Disable start-up screen
@@ -45,6 +45,7 @@
 (setq visible-bell 1)
 (setq backup-directory-alist `(("." . "~/.saves")))
 (setq shift-select-mode nil)
+(set-cursor-color "#00bfff")
 
 (if (eq window-system 'ns)
     (toggle-frame-maximized)
@@ -210,19 +211,21 @@
                          (buffer-file-name))))
 
 (use-package auctex
-   :defer t
-   :ensure t)
- (setq TeX-auto-save t)
- (setq TeX-parse-self t)
- (add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode))
-(setq font-latex-fontify-script nil)
+  :defer t
+  :ensure t
+  :custom
+  (TeX-auto-save t)
+  (TeX-parse-self t)
+  (font-latex-fontify-script nil)
+  :config
+  (add-to-list 'auto-mode-alist '("\\.tex$" . LaTeX-mode)))
 
 (use-package org
   :ensure nil
+
   :preface
   (defun me/org-src-buffer-name (org-buffer-name language)
-    "Construct the buffer name for a source editing buffer. See
-`org-src--construct-edit-buffer-name'."
+    "Construct the buffer name for a source editing buffer. See `org-src--construct-edit-buffer-name'."
     (format "*%s*" org-buffer-name))
   (defun me/org-set-ongoing-hydra-body ()
     (setq me/ongoing-hydra-body #'hydra-org/body))
@@ -233,8 +236,7 @@
         ("<C-return>" . nil)
         ("<C-S-down>" . nil)
         ("<C-S-up>" . nil))
-;        ("<M-S-down>" . nil)
-;        ("<M-S-up>" . nil))
+
   :hook
   ((org-mode . me/org-set-ongoing-hydra-body)
    (org-mode . org-sticky-header-mode)
@@ -248,45 +250,12 @@
   (org-src-window-setup 'current-window)
   (org-startup-folded 'content)
   (org-startup-truncated nil)
-  ;;(org-support-shift-select 'always)
   (org-support-shift-select 0)
+
   :config
-  (advice-add 'org-src--construct-edit-buffer-name :override #'me/org-src-buffer-name))
-
-(use-package org-sticky-header
-  :custom
-  (org-sticky-header-full-path 'full)
-  (org-sticky-header-outline-path-separator " / ")
-  :config
-  (setq-default
-   org-sticky-header-header-line-format
-   '(:eval (setq org-sticky-header-stickyline (concat " " (org-sticky-header--fetch-stickyline))))))
-
-(use-package toc-org :after org)
-
-(add-hook 'org-mode-hook 'org-indent-mode)
-
-(use-package org-bullets
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode t))))
-(use-package org-bullets
-  :hook (org-mode . org-bullets-mode)
-  :config
-  (setq org-bullets-bullet-list '("◉" "○" "□" "◉" "○" "□" "✸")))
-  (set-language-environment 'utf-8)
-  (setq locale-coding-system 'utf-8)
-
-  ;; set the default encoding system
-  (prefer-coding-system 'utf-8)
-  (setq default-file-name-coding-system 'utf-8)
-  (set-default-coding-systems 'utf-8)
-  (set-terminal-coding-system 'utf-8)
-  (set-keyboard-coding-system 'utf-8)
-
-  ;; Treat clipboard input as UTF-8 string first; compound text next, etc.
-  (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
-
-(let* ((variable-tuple
+  (advice-add 'org-src--construct-edit-buffer-name :override #'me/org-src-buffer-name)
+  ;; Prettify Org headings
+  (let* ((variable-tuple
         (cond ((x-list-fonts "Source Sans Pro")         '(:font "Source Sans Pro"))
               ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
               ((x-list-fonts "Source Sans Pro")   '(:font "Source Sans Pro"))
@@ -306,6 +275,119 @@
    `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#5f9ea0"))))
    `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#6a5acd"))))
    `(org-document-title ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#6a5acd"))))))
+  ;; Agenda customization
+  (setq org-agenda-files (list "~/Dropbox/orgfiles/work.org" "~/Dropbox/orgfiles/Life.org" "~/Dropbox/orgfiles/newgtd.org"))
+  (setq org-capture-templates
+        '(("a" "Appointment" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Appointments:" ) "*** %?\n:SCHEDULED: %^T\n:PROPERTIES:\n:END:\n")
+          ("f" "Follow up Later" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Follow up Later:" ) "** %?\n")
+          ("F" "Follow up Later (work)" entry (file+headline  "~/Dropbox/orgfiles/work.org" "Follow up Later:" ) "** %?\n")
+          ("l" "Important Link (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Important Links") "* %? %^L %^g \n%T" :prepend t)
+          ("L" "Read/Watch later" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Links") "** %? %^L %^g \n%T" :prepend t)
+          ("s" "Shopping list" checkitem (file+headline "~/Dropbox/orgfiles/newgtd.org" "Shopping List:") "- [ ] %?\n" :prepend t)
+          ("t" "Work TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Work") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
+          ("T" "Personal TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Life") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
+          ("n" "Note (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Note space:") "** %?\n%u" :prepend t)
+          ("N" "Note (personal)" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Note space:") "** %?\n%u" :prepend t)
+          ("j" "Journal" entry (file+datetree "~/Dropbox/journal.org") "* %?\nEntered on %U\n  %i\n  %a")))
+
+  (defadvice org-agenda (around split-vertically activate)
+    (let ((split-width-threshold 80))  ; or whatever width makes sense for you
+      ad-do-it))
+  (defadvice org-capture (around split-vertically activate)
+    (let ((split-width-threshold 80))  ; or whatever width makes sense for you
+      ad-do-it))
+
+  ;; Org refile
+  (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+  (setq org-refile-use-outline-path 'file)
+  (setq org-outline-path-complete-in-steps nil)
+  (setq org-refile-allow-creating-parent-nodes 'confirm)
+
+  ;; Org todo
+  (setq org-todo-keywords'((sequence "TODO(t)" "ONGOING(o)" "ALMOST(a)" "VERIFY(v)" "|" "DONE(d)" "DELEGATED(D)" "CANCELED(c)")))
+
+  (setq org-todo-keyword-faces
+        '(("TODO" . "#ff6347")
+          ("ONGOING" . "#ffd700")
+          ("ALMOST" . "#228b22")
+          ("VERIFY" . "#bc8f87")
+          ("CANCELED" . (:foreground "white" :background "#ff6347" :weight bold))
+          ("DELEGATED" . (:foreground "white" :background "#bc8f87" :weight bold))
+          ("DONE" . (:foreground "white" :background "#228b22" :weight bold))))
+
+  ;; Org-latex output
+  (setq org-latex-pdf-process
+        '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f"))
+  (require 'ox-beamer)
+  (setq org-highlight-latex-and-related '(latex script entities))
+
+  ;; Org babel language load
+  (org-babel-do-load-languages
+   'org-babel-load-languages '((python . t)))
+  (setq org-babel-python-command "/home/gogo/Software/anaconda3/bin/python")
+
+  ;; Fill Paragraph in org-mode latex block
+  (defun org-fill-paragraph--latex-environment (&rest args)
+    "Use default fill-paragraph in latex environments."
+    (not (eql (org-element-type (org-element-context)) 'latex-environment)))
+
+  (advice-add 'org-fill-paragraph :before-while #'org-fill-paragraph--latex-environment))
+(global-set-key (kbd "\C-c c") 'org-capture)
+(global-set-key (kbd "\C-c a") 'org-agenda)
+
+(use-package org-sticky-header
+  :custom
+  (org-sticky-header-full-path 'full)
+  (org-sticky-header-outline-path-separator " / ")
+  :config
+  (setq-default
+   org-sticky-header-header-line-format
+   '(:eval (setq org-sticky-header-stickyline (concat " " (org-sticky-header--fetch-stickyline))))))
+
+(use-package toc-org :after org)
+
+;(add-hook 'org-mode-hook 'org-indent-mode)
+
+;(use-package org-bullets
+;  :config
+;  (add-hook 'org-mode-hook (lambda () (org-bullets-mode t))))
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :config
+  (setq org-bullets-bullet-list '("◉" "○" "□" "◉" "○" "□" "✸")))
+(set-language-environment 'utf-8)
+(setq locale-coding-system 'utf-8)
+
+  ;; set the default encoding system
+(prefer-coding-system 'utf-8)
+(setq default-file-name-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+
+;; Treat clipboard input as UTF-8 string first; compound text next, etc.
+(setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
+
+;; (let* ((variable-tuple
+;;         (cond ((x-list-fonts "Source Sans Pro")         '(:font "Source Sans Pro"))
+;;               ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+;;               ((x-list-fonts "Source Sans Pro")   '(:font "Source Sans Pro"))
+;;               ;((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+;;               (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+;;        (base-font-color     (face-foreground 'default nil 'default))
+;;        (headline           `(:inherit default :weight bold :foreground ,base-font-color)))
+;; 
+;;   (custom-theme-set-faces
+;;    'user
+;;    `(org-level-8 ((t (,@headline ,@variable-tuple))))
+;;    `(org-level-7 ((t (,@headline ,@variable-tuple))))
+;;    `(org-level-6 ((t (,@headline ,@variable-tuple))))
+;;    `(org-level-5 ((t (,@headline ,@variable-tuple))))
+;;    `(org-level-4 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#8470ff"))))
+;;    `(org-level-3 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#228b22"))))
+;;    `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#5f9ea0"))))
+;;    `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.0 :foreground "#6a5acd"))))
+;;    `(org-document-title ((t (,@headline ,@variable-tuple :height 1.2 :foreground "#6a5acd"))))))
 
 (use-package org-ref
   ;; :init
@@ -314,10 +396,10 @@
   (setq
    org-ref-completion-library 'org-ref-helm-bibtex
    org-ref-get-pdf-filename-function 'org-ref-get-pdf-filename-helm-bibtex
-   org-ref-bibliography-notes "~/Dropbox/orgfiles/bibnotes.org"
+   ;org-ref-bibliography-notes "~/Dropbox/orgfiles/bibnotes.org"
    org-ref-default-bibliography (list "/home/gogo/Dropbox/Bibliography/references.bib")
-   ;org-ref-pdf-directory '("/home/gogo/Dropbox/Research_papers")
-   org-ref-notes-directory "/home/gogo/Dropbox/Notes/"
+   org-ref-pdf-directory '("/home/gogo/Dropbox/Research_papers")
+   org-ref-notes-directory "/home/gogo/wiki/refs/"
    org-ref-notes-function 'orb-edit-notes)
 
    (defun my/org-ref-open-pdf-at-point ()
@@ -335,190 +417,202 @@
                                         ; default keybindings
   :bind
   (:map org-mode-map
-        ("\C-cr" . org-ref-helm-insert-ref-link)
-        ("\C-c)" . org-ref-helm-insert-cite-link))
- )
+        ("\C-c(" . org-ref-helm-insert-ref-link)
+        ("\C-c)" . org-ref-helm-insert-cite-link)))
 
+;; (global-set-key (kbd "\C-c c") 'org-capture)
+;; (global-set-key (kbd "\C-c a") 'org-agenda)
+;; (setq org-agenda-files (list "~/Dropbox/orgfiles/work.org" "~/Dropbox/orgfiles/Life.org" "~/Dropbox/orgfiles/newgtd.org"))
+;; (setq org-capture-templates
+;;       '(("a" "Appointment" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Appointments:" ) "*** %?\n:SCHEDULED: %^T\n:PROPERTIES:\n:END:\n")
+;;       ("f" "Follow up Later" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Follow up Later:" ) "** %?\n")
+;;       ("F" "Follow up Later (work)" entry (file+headline  "~/Dropbox/orgfiles/work.org" "Follow up Later:" ) "** %?\n")
+;;       ("l" "Important Link (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Important Links") "* %? %^L %^g \n%T" :prepend t)
+;;       ("L" "Read/Watch later" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Links") "** %? %^L %^g \n%T" :prepend t)
+;;       ("s" "Shopping list" checkitem (file+headline "~/Dropbox/orgfiles/newgtd.org" "Shopping List:") "- [ ] %?\n" :prepend t)
+;;       ("t" "Work TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Work") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
+;;       ("T" "Personal TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Life") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
+;;       ("n" "Note (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Note space:") "** %?\n%u" :prepend t)
+;;       ("N" "Note (personal)" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Note space:") "** %?\n%u" :prepend t)
+;;       ("j" "Journal" entry (file+datetree "~/Dropbox/journal.org") "* %?\nEntered on %U\n  %i\n  %a")))
+;; 
+;; (defadvice org-agenda (around split-vertically activate)
+;;   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
+;;     ad-do-it))
+;; (defadvice org-capture (around split-vertically activate)
+;;   (let ((split-width-threshold 80))  ; or whatever width makes sense for you
+;;     ad-do-it))
 
+;; (global-set-key (kbd "\C-c \C-w") 'org-refile)
+;; ;(global-set-key (kbd "S-c") "C")
+;; (setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
+;; (setq org-refile-use-outline-path 'file)
+;; (setq org-outline-path-complete-in-steps nil)
+;; (setq org-refile-allow-creating-parent-nodes 'confirm)
 
-;  (define-key org-mode-map "\C-cr" 'org-ref-helm-insert-ref-link)
-;  (define-key org-mode-map "\C-c)" 'org-ref-helm-insert-cite-link)
+;; (setq org-todo-keywords'((sequence "TODO(t)" "ONGOING(o)" "ALMOST(a)" "ORDERED(O)"  "FEEDBACK(f)" "VERIFY(v)" "|" "DONE(d)" "DELEGATED" "RECIEVED(r)" "CANCELED(c)")))
+;; 
+;;   (setq org-todo-keyword-faces
+;;         '(("TODO" . org-warning) ("ONGOING" . "orange")
+;;           ("CANCELED" . "red") ("DONE" . "#00ff7f") ("RECIEVED" . "green") ("ALMOST". "blue")))
 
-(global-set-key (kbd "\C-c c") 'org-capture)
-(global-set-key (kbd "\C-c a") 'org-agenda)
-(setq org-agenda-files (list "~/Dropbox/orgfiles/work.org" "~/Dropbox/orgfiles/Life.org" "~/Dropbox/orgfiles/newgtd.org"))
-(setq org-capture-templates
-      '(("a" "Appointment" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Appointments:" ) "*** %?\n:SCHEDULED: %^T\n:PROPERTIES:\n:END:\n")
-      ("f" "Follow up Later" entry (file+headline  "~/Dropbox/orgfiles/newgtd.org" "Follow up Later:" ) "** %?\n")
-      ("F" "Follow up Later (work)" entry (file+headline  "~/Dropbox/orgfiles/work.org" "Follow up Later:" ) "** %?\n")
-      ("l" "Important Link (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Important Links") "* %? %^L %^g \n%T" :prepend t)
-      ("L" "Read/Watch later" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Links") "** %? %^L %^g \n%T" :prepend t)
-      ("s" "Shopping list" checkitem (file+headline "~/Dropbox/orgfiles/newgtd.org" "Shopping List:") "- [ ] %?\n" :prepend t)
-      ("t" "Work TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Work") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
-      ("T" "Personal TODO" entry (file+headline "~/Dropbox/orgfiles/newgtd.org" "Life") "*** TODO %?%^g\n:CREATED: %u\n:SCHEDULED: %^T\n:DEADLINE: %^T" :prepend t)
-      ("n" "Note (work)" entry (file+headline "~/Dropbox/orgfiles/work.org" "Note space:") "** %?\n%u" :prepend t)
-      ("N" "Note (personal)" entry (file+headline "~/Dropbox/orgfiles/Life.org" "Note space:") "** %?\n%u" :prepend t)
-      ("j" "Journal" entry (file+datetree "~/Dropbox/journal.org") "* %?\nEntered on %U\n  %i\n  %a")))
+;; (setq org-latex-pdf-process
+;;         '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f"))
+;; (require 'ox-beamer)
+;; (setq org-highlight-latex-and-related '(latex script entities))
 
-(defadvice org-agenda (around split-vertically activate)
-  (let ((split-width-threshold 80))  ; or whatever width makes sense for you
-    ad-do-it))
-(defadvice org-capture (around split-vertically activate)
-  (let ((split-width-threshold 80))  ; or whatever width makes sense for you
-    ad-do-it))
-
-(global-set-key (kbd "\C-c \C-w") 'org-refile)
-;(global-set-key (kbd "S-c") "C")
-(setq org-refile-targets '((org-agenda-files :maxlevel . 3)))
-(setq org-refile-use-outline-path 'file)
-(setq org-outline-path-complete-in-steps nil)
-(setq org-refile-allow-creating-parent-nodes 'confirm)
-
-(setq org-todo-keywords'((sequence "TODO(t)" "ONGOING(o)" "ALMOST(a)" "ORDERED(O)"  "FEEDBACK(f)" "VERIFY(v)" "|" "DONE(d)" "DELEGATED" "RECIEVED(r)" "CANCELED(c)")))
-
-  (setq org-todo-keyword-faces
-        '(("TODO" . org-warning) ("ONGOING" . "orange")
-          ("CANCELED" . "red") ("DONE" . "#00ff7f") ("RECIEVED" . "green") ("ALMOST". "blue")))
-
-(setq org-latex-pdf-process
-        '("latexmk -pdflatex='pdflatex -interaction nonstopmode' -pdf -bibtex -f %f"))
-(require 'ox-beamer)
-(setq org-highlight-latex-and-related '(latex script entities))
-
-(use-package org-autolist)
-(add-hook 'org-mode-hook (lambda () (org-autolist-mode)))
+(use-package org-autolist
+  :hook (org-mode . org-autolist-mode))
+;(add-hook 'org-mode-hook (lambda () (org-autolist-mode)))
 
 (use-package pdf-tools
 :ensure t
 :config
-(pdf-tools-install)
-)
-(pdf-tools-install)
-;(use-package org-pdfview
-;':ensure t)
+(pdf-tools-install))
 
-(org-babel-do-load-languages
- 'org-babel-load-languages '((python . t)))
-(setq org-babel-python-command "/home/gogo/anaconda3/bin/python")
+;; (org-babel-do-load-languages
+;;  'org-babel-load-languages '((python . t)))
+;; (setq org-babel-python-command "/home/gogo/anaconda3/bin/python")
 
-(defun org-fill-paragraph--latex-environment (&rest args)
-  "Use default fill-paragraph in latex environments."
-  (not (eql (org-element-type (org-element-context)) 'latex-environment)))
+;; (defun org-fill-paragraph--latex-environment (&rest args)
+;;   "Use default fill-paragraph in latex environments."
+;;   (not (eql (org-element-type (org-element-context)) 'latex-environment)))
 
-(advice-add 'org-fill-paragraph :before-while #'org-fill-paragraph--latex-environment)
+;; (advice-add 'org-fill-paragraph :before-while #'org-fill-paragraph--latex-environment)
 
 (use-package org-roam
-  ;; :init
-  :hook (after-init . org-roam-mode)
-  :config 
-  (setq
-   org-roam-directory "~/wiki"
-   org-roam-tag-sources '(prop all-directories)
-   org-roam-capture-templates
-        '(("d" "default" plain (function org-roam--capture-get-point)
-           "%?"
-           :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
-           :head "#+TITLE: ${title} "
-           :unnarrowed t)
-          ("r" "reference" plain (function org-roam--capture-get-point)
-           "User input: %^{PROMPT}"
-           :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
-           :head "#+TITLE: ${title}"
-           :unnarrowed t))))
-  ;;(add-hook 'after-init-hook 'org-roam-mode)
-  ;;(setq org-roam-tag-sources '(prop all-directories))
-  ;(setq org-roam-capture-templates
-  ;;      '(("d" "default" plain (function org-roam--capture-get-point)
-  ;;         "%?"
-  ;;         :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
-  ;;         :head "#+TITLE: ${title} "
-  ;;         :unnarrowed t)
-  ;;        ("r" "reference" plain (function org-roam--capture-get-point)
-  ;;        "User input: %^{PROMPT}"
-  ;;         :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
-  ;;         :head "#+TITLE: ${title}"
-  ;;         :unnarrowed t))))
+  :ensure t
+  :init
+  (setq org-roam-v2-ack t)
+  :custom
+  (org-roam-directory "~/wiki")
+  (setq org-roam-complete-link-at-point t)
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert)
+         :map org-mode-map
+         ("C-M-i"    . completion-at-point))
+
+  :config
+  (org-roam-setup)
+  (add-to-list 'display-buffer-alist
+             '("\\*org-roam\\*"
+               (display-buffer-in-direction)
+               (direction . right)
+               (window-width . 0.33)
+               (window-height . fit-window-to-buffer))))
+    
+  (use-package org-roam-bibtex
+    :after org-roam
+    :hook (org-roam-mode . org-roam-bibtex-mode)
+    :config
+    (require 'org-ref)
+    :bind
+    (:map org-roam-bibtex-mode-map
+          (("C-c m f" . orb-find-non-ref-file))
+          :map org-mode-map
+          (("C-c m t" . orb-insert-non-ref)
+           ("C-c m a" . orb-note-actions)))
+    :custom
+    (orb-autokey-format "%a%y")
+    (setq orb-note-actions-interface 'helm))
+
+(setq orb-preformat-keywords
+      '("citekey" "title" "url" "author-or-editor" "keywords" "file")
+      orb-process-file-keyword t
+      orb-file-field-extensions '("pdf"))
+
+(setq org-roam-capture-templates
+      '(("d" "default" plain "%?"
+         :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org"
+                            "#+title: ${title}\n")
+         :unnarrowed t)
+        
+        ("r" "bibliography reference" plain
+         (file "/home/gogo/.emacs.d/template/orb-org-noter-integration-template")
+         :if-new
+         (file+head "refs/${citekey}.org" "#+title: ${title}\n"))))
 
 
-(defvar orb-title-format "${author-or-editor-abbrev} (${date}).  ${title}."
-  "Format of the title to use for `orb-templates'.")
-
-;;  (use-package org-roam-bibtex
-;;   :after (org-roam)
-;;   :hook (org-roam-mode . org-roam-bibtex-mode)
-;;   :config
-;;   (require 'org-ref)
-;;   (setq org-roam-bibtex-preformat-keywords
-;;    '("=key=" "title" "url" "file" "author-or-editor" "keywords"))
-;;   (setq orb-templates
-;;         '(("r" "ref" plain (function org-roam-capture--get-point)
-;;            ""
-;;            :file-name "${slug}"
-;;            :head "#+TITLE: ${=key=}: ${title}\n#+ROAM_KEY: ${ref}\n#+ROAM_TAGS: 
-
-;; - keywords :: ${keywords}
-
-;; \n* ${title}\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :URL: ${url}\n  :AUTHOR: ${author-or-editor}\n  :NOTER_DOCUMENT: %(orb-process-file-field \"${=key=}\")\n  :NOTER_PAGE: \n  :END:\n\n"
-
+;; (use-package org-roam
+;;   ;; :init
+;;   :hook (after-init . org-roam-mode)
+;;   :config 
+;;   (setq
+;;    org-roam-directory "~/wiki"
+;;    org-roam-tag-sources '(prop all-directories)
+;;    org-roam-capture-templates
+;;         '(("d" "default" plain (function org-roam--capture-get-point)
+;;            "%?"
+;;            :file-name "%<%Y-%m-%d-%H%M%S>-${slug}"
+;;            :head "#+TITLE: ${title} "
+;;            :unnarrowed t)
+;;           ("r" "reference" plain (function org-roam--capture-get-point)
+;;            "User input: %^{PROMPT}"
+;;            :file-name "references/%<%Y-%m-%d-%H%M%S>-${slug}"
+;;            :head "#+TITLE: ${title}"
 ;;            :unnarrowed t))))
 
-(use-package org-roam-bibtex
- :after org-roam
- :hook (org-roam-mode . org-roam-bibtex-mode)
- :config
- (require 'org-ref)
- :bind (:map org-roam-bibtex-mode-map
-        (("C-c m f" . orb-find-non-ref-file))
-        :map org-mode-map
-        (("C-c m t" . orb-insert-non-ref)
-         ("C-c m a" . orb-note-actions)))
- :init
- :custom
- (orb-autokey-format "%a%y")
- (orb-templates
-  `(("r" "ref" plain
-     (function org-roam-capture--get-point)
-     ""
-     :file-name "refs/${citekey}"
-     :head ,(s-join "\n"
-                    (list
-                     (concat "#+title: "
-                             orb-title-format)
-                     "#+roam_key: ${ref}"
-                     "#+created: %U"
-                     "#+last_modified: %U\n\n"))
-     :unnarrowed t)
-    ("p" "ref + physical" plain
-     (function org-roam-capture--get-point)
-     ""
-     :file-name "refs/${citekey}"
-     :head ,(s-join "\n"
-                    (list
-                     (concat "#+title: "
-                             orb-title-format)
-                     "#+roam_key: ${ref}"
-                     ""
-                     "* Notes :physical:")))
-    ("n" "ref + noter" plain
-     (function org-roam-capture--get-point)
-     ""
-     :file-name "refs/${citekey}"
-     :head ,(s-join "\n"
-                    (list
-                     (concat "#+title: "
-                             orb-title-format)
-                     "#+roam_key: ${ref}"
-                     ""
-                     "* Notes :noter:"
-                     ":PROPERTIES:"
-                     ":NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")"
-                     ":NOTER_PAGE:"
-                     ":END:"))))))
+;; (defvar orb-title-format "${author-or-editor-abbrev} (${date}).  ${title}."
+;;   "Format of the title to use for `orb-templates'.")
 
-;(use-package org-roam-bibtex
-;  :after org-roam
-;  :hook (org-roam-mode . org-roam-bibtex-mode))
-;(use-package org-noter)
+;; (use-package org-roam-bibtex
+;;  :after org-roam
+;;  :hook (org-roam-mode . org-roam-bibtex-mode)
+;;  :config
+;;  (require 'org-ref)
+;;  :bind (:map org-roam-bibtex-mode-map
+;;         (("C-c m f" . orb-find-non-ref-file))
+;;         :map org-mode-map
+;;         (("C-c m t" . orb-insert-non-ref)
+;;          ("C-c m a" . orb-note-actions)))
+;;  :init
+;;  :custom
+;;  (orb-autokey-format "%a%y")
+;;  (orb-templates
+;;   `(("r" "ref" plain
+;;      (function org-roam-capture--get-point)
+;;      ""
+;;      :file-name "refs/${citekey}"
+;;      :head ,(s-join "\n"
+;;                     (list
+;;                      (concat "#+title: "
+;;                              orb-title-format)
+;;                      "#+roam_key: ${ref}"
+;;                      "#+created: %U"
+;;                      "#+last_modified: %U\n\n"))
+;;      :unnarrowed t)
+;;     ("p" "ref + physical" plain
+;;      (function org-roam-capture--get-point)
+;;      ""
+;;      :file-name "refs/${citekey}"
+;;      :head ,(s-join "\n"
+;;                     (list
+;;                      (concat "#+title: "
+;;                              orb-title-format)
+;;                      "#+roam_key: ${ref}"
+;;                      ""
+;;                      "* Notes :physical:")))
+;;     ("n" "ref + noter" plain
+;;      (function org-roam-capture--get-point)
+;;      ""
+;;      :file-name "refs/${citekey}"
+;;      :head ,(s-join "\n"
+;;                     (list
+;;                      (concat "#+title: "
+;;                              orb-title-format)
+;;                      "#+roam_key: ${ref}"
+;;                      ""
+;;                      "* Notes :noter:"
+;;                      ":PROPERTIES:"
+;;                      ":NOTER_DOCUMENT: %(orb-process-file-field \"${citekey}\")"
+;;                      ":NOTER_PAGE:"
+;;                      ":END:"))))))
+
+;; ;(use-package org-roam-bibtex
+;; ;  :after org-roam
+;; ;  :hook (org-roam-mode . org-roam-bibtex-mode))
+;; ;(use-package org-noter)
 
 (use-package org-noter
   :bind (:map org-mode-map
@@ -637,18 +731,28 @@ position."
      python-shell-completion-string-code
      "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
 
-(use-package anaconda-mode)
-(add-hook 'python-mode-hook 'anaconda-mode)
-(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-(use-package conda)
-(set-cursor-color "#00bfff")
-(use-package company-anaconda)
-(eval-after-load "company"
- '(add-to-list 'company-backends 'company-anaconda))
+(use-package anaconda-mode
+  :hook ((python-mode . anaconda-mode)
+         (python-mode . anaconda-eldoc-mode)))
+;(add-hook 'python-mode-hook 'anaconda-mode)
+;(add-hook 'python-mode-hook 'anaconda-eldoc-mode)
 
-(use-package pyvenv)
+(use-package conda
+  :ensure t
+  :init
+  (setq conda-anaconda-home (expand-file-name "~/Software/anaconda3"))
+  (setq conda-env-home-directory (expand-file-name "~/Software/anaconda3")))
+
+(use-package company-anaconda
+  :after company
+  :config
+  (add-to-list 'company-backends 'company-anaconda))
+;(eval-after-load "company"
+; '(add-to-list 'company-backends 'company-anaconda))
+
+;(use-package pyvenv)
 ;(setenv "WORKON_HOME" (concat (getenv "CONDA_PREFIX") "/envs"))
-(pyvenv-mode 1)
+;(pyvenv-mode 1)
 
 (use-package em-hist
   :ensure nil
@@ -716,44 +820,46 @@ position."
 (use-package gitconfig-mode)
 (use-package gitignore-mode)
 
-(use-package company
-  :bind
-  (:map company-active-map
-        ("RET" . nil)
-        ([return] . nil)
-        ("TAB" . company-complete-selection)
-        ([tab] . company-complete-selection)
-        ("<right>" . company-complete-common))
-  :hook
-  (after-init . global-company-mode)
-  :custom
-  (company-dabbrev-downcase nil)
-  (company-idle-delay .2)
-  (company-minimum-prefix-length 1)
-  (company-require-match nil)
-  (company-tooltip-align-annotations t))
-  ;(delete 'company-dabbrev company-backends)
-  (setq company-dabbrev-char-regexp "[A-z:-]")
-
- (use-package yasnippet
-  :bind
-  (:map yas-minor-mode-map
-        ("TAB" . nil)
-        ([tab] . nil)
-        ("<C-tab>" . yas-expand))
-  :hook
-  ((emacs-lisp-mode . yas-minor-mode)
-   (html-mode . yas-minor-mode)
-   (js-mode . yas-minor-mode)
-   (org-mode . yas-minor-mode)
-   (python-mode . yas-minor-mode)
-   (LaTeX-mode . yas-minor-mode))
-  :custom
-  (yas-snippet-dirs `(,(expand-file-name "snippets/" user-emacs-directory)))
-  (yas-verbosity 2)
-  :config
-  (yas-reload-all))
-(use-package yasnippet-snippets)
+;; (use-package company
+;;   :bind
+;;   (:map company-active-map
+;;         ("RET" . nil)
+;;         ([return] . nil)
+;;         ("TAB" . company-complete-selection)
+;;         ([tab] . company-complete-selection)
+;;         ("<C-tab>" . company-complete-common))
+;;   :hook
+;;   (after-init . global-company-mode)
+;;   :custom
+;;   (company-dabbrev-downcase nil)
+;;   (company-idle-delay .2)
+;;   (company-minimum-prefix-length 1)
+;;   (company-require-match nil)
+;;   (company-tooltip-align-annotations t)
+;;   :config
+;;   (add-to-list 'company-backends 'company-capf)
+;;   (setq company-dabbrev-char-regexp "[A-z:-]"))
+;; 
+;; 
+;;  (use-package yasnippet
+;;   :bind
+;;   (:map yas-minor-mode-map
+;;         ("TAB" . nil)
+;;         ([tab] . nil)
+;;         ("<C-tab>" . yas-expand))
+;;   :hook
+;;   ((emacs-lisp-mode . yas-minor-mode)
+;;    (html-mode . yas-minor-mode)
+;;    (js-mode . yas-minor-mode)
+;;    (org-mode . yas-minor-mode)
+;;    (python-mode . yas-minor-mode)
+;;    (LaTeX-mode . yas-minor-mode))
+;;   :custom
+;;   (yas-snippet-dirs `(,(expand-file-name "snippets/" user-emacs-directory)))
+;;   (yas-verbosity 2)
+;;   :config
+;;   (yas-reload-all))
+;; (use-package yasnippet-snippets)
 
 (global-set-key [remap kill-buffer] #'kill-this-buffer)
 
@@ -801,7 +907,7 @@ position."
    ("M-w" . me/helm-grab-candidates))
   :hook
   (after-init . helm-mode)
-  (helm-after-action . me/helm-focus-follow)
+  ;; (helm-after-action . me/helm-focus-follow)
   :custom
   (helm-M-x-fuzzy-match t)
   (helm-always-two-windows t)
@@ -938,8 +1044,7 @@ position."
   ("C-=" . er/expand-region))
 
 (use-package undo-tree
-    :ensure t
-    :config
+    :init
     (global-undo-tree-mode))
 
 (use-package which-key)
@@ -973,8 +1078,12 @@ position."
 
 ;;(use-package interleave)
 
-;; (use-package evil-leader)
-;; (global-evil-leader-mode)
+;; (use-package evil-leader
+;;   :ensure t
+;;   :config
+;;   (evil-leader/set-leader "<SPC>")
+;;   (global-evil-leader-mode))
+
 
 ;; (use-package evil
 ;;  :ensure t  ;; install evil if not installed
@@ -990,7 +1099,7 @@ position."
 ;;  :ensure t
 ;;  :config
 ;;  (evil-collection-init))
-;;Evil-org for evil mode in org documents 
+;; ;; Evil-org for evil mode in org documents 
 ;; (use-package evil-org
 ;;  :commands evil-org-mode
 ;;  :after org
@@ -1028,15 +1137,15 @@ position."
 
 ;;  ))
 
-;; (use-package evil-org)
-;; ;; (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading))
+;; ;; (use-package evil-org)
+;; ;; ;; (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading))
 ;; ;; make movement keys work like they should
 ;; (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
 ;; (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
 ;; (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
 ;; (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
 ;; ;; make horizontal movement cross lines                                    
-;; ;; (setq-default evil-cross-lines t)
+;; (setq-default evil-cross-lines t)
 
 (defun me/date-iso ()
   "Insert the current date, ISO format, eg. 2016-12-09."
@@ -1133,6 +1242,8 @@ my-command-mode defines the following bindings:
   ("C-c p" . hydra-projectile/body)
   ("C-c s" . hydra-system/body)
   ("C-c w" . hydra-windows/body)
+  ("C-c r" . hydra-org-roam/body)
+  ("C-." . hydra-motion/body)
   :custom
   (hydra-default-hint nil))
 
@@ -1406,3 +1517,22 @@ _q_ quit                       _k_
   ("<down>" next-line)
   ("u" undo "Undo"))
 (global-set-key (kbd "C-.") 'hydra-motion/body)
+
+;; Define a transient state for inserting org-roam links
+  (defhydra hydra-org-roam (:color blue)
+  "
+^
+^Windows^           ^Node^             ^Sync^
+^───────^───────────^─────^────────────^────^──────────────
+_q_ quit              _c_ Capture          _s_ Sync
+                    _i_ Insert           _t_ Buffer toggle
+                    _f_ Find
+^^ 
+"
+  ("q" nil)
+  ("t" org-roam-buffer-toggle)
+  ("s" org-roam-db-sync)
+  ("i" org-roam-node-insert)
+  ("f" org-roam-node-find)
+  ("c" org-roam-capture))
+  ;(evil-leader/set-key-for-mode 'org-mode "r" 'hydra-org-ref/body)

@@ -8,8 +8,8 @@
  (rear-context-string . ":27]\n** Travel:\n")
  (position . 6931))
 ("org-capture-last-stored"
- (filename . "~/wiki/refs/2019ApJ...887..185S.org")
- (front-context-string . "#+title: Sarkar,")
- (rear-context-string)
- (position . 1))
+ (filename . "~/wiki/20210829003719-rocketbook_wave.org")
+ (front-context-string . "Wave is a notebo")
+ (rear-context-string . "Rocketbook_Wave\n")
+ (position . 93))
 )
